@@ -4,9 +4,9 @@
 }
 
 .imageContainer {
-  width: 30%;
   flex: 0 0 30%;
   background-color: #000;
+  
 }
 
 .welcome {
