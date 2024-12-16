@@ -1,12 +1,13 @@
 .homeContainer {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
 }
 
 .imageContainer {
-  flex: 0 0 30%;
+  flex: 0 0 50%;
   background-color: #000;
-  
+  position: relative;
+
 }
 
 .welcome {

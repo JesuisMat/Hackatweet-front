@@ -1,10 +1,17 @@
 import styles from "../styles/Home.module.css";
+import Image from 'next/image';
 
 function Home() {
   return (
     <div className={styles.homeContainer}>
       <div className={styles.imageContainer}>
-        <img className={styles.image} src="background-image-twitter.jpg" alt="twitter background" />
+        <Image
+          src="/background-image-twitter.jpg"  // Make sure the image exists in the public folder
+          alt="Background"
+          fill  // replaces layout="fill"
+          style={{ objectFit: "cover" }}  // replaces objectFit prop
+          priority
+        />
       </div>
       <div className={styles.welcome}>
         <h1>See what's happening</h1>
