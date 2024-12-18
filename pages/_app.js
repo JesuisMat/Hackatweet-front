@@ -1,15 +1,7 @@
-import Head from 'next/head';
-import Home from '../components/Home';
+import '../styles/globals.css';
 
-function App() {
-  return (
-    <>
-      <Head>
-        <title>Hackatweet</title>
-        <Home />
-      </Head>
-    </>
-  );
+function MyApp({ Component, pageProps }) {
+  return <Component {...pageProps} />;
 }
 
-export default App;
+export default MyApp;
