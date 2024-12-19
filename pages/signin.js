@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useDispatch } from 'react-redux'; // Ajout du hook useDispatch
 import styles from "../styles/SignIn.module.css";
 import { useRouter } from 'next/router';
 import Image from 'next/image';
@@ -8,6 +9,7 @@ export default function SignIn() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
+  const dispatch = useDispatch(); // Initialisation du dispatch
 
   const handleSignIn = async (e) => {
     e.preventDefault();
@@ -25,11 +27,20 @@ export default function SignIn() {
 
       if (data.result) {
         localStorage.setItem('userToken', data.token);
-        router.push('/home');
+
+        // Dispatch les actions de manière séquentielle
+        await Promise.all([
+          dispatch({ type: 'SET_TOKEN', payload: data.token }),
+          dispatch({ type: 'SET_USER', payload: { username, token: data.token } })
+        ]);
+
+        // Utilisez await pour s'assurer que la navigation se fait après les dispatches
+        await router.push('/home');
       } else {
         setError(data.error || 'Invalid credentials');
       }
     } catch (err) {
+      console.error('Signin error:', err);
       setError('An error occurred. Please try again.');
     }
   };

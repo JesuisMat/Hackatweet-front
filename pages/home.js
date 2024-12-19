@@ -1,59 +1,100 @@
 import { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux'; 
 import styles from '../styles/Home.module.css';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 
 export default function Home() {
+  // États locaux
   const [tweetContent, setTweetContent] = useState('');
   const [tweets, setTweets] = useState([]);
   const [trends, setTrends] = useState([]);
-  const [user, setUser] = useState(null);
+  
+ 
+  const user = useSelector(state => state.users.user); 
+  const token = useSelector(state => state.users.token); 
+  
   const router = useRouter();
+  const dispatch = useDispatch();
+
+  const BACKEND_URL = 'https://hackatweet-backend-six-swart.vercel.app';
 
   const fetchUserInfo = async () => {
-    const token = localStorage.getItem('userToken');
     if (!token) return;
-  
+
     try {
-      const response = await fetch('https://hackatweet-backend-six-swart.vercel.app/users/me', {
+      const response = await fetch(`${BACKEND_URL}/users/me`, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
       const data = await response.json();
       
       if (data.result) {
-        setUser(data.user);
+        
+        dispatch({ type: 'SET_USER', payload: data.user });
       }
     } catch (error) {
       console.error('Error fetching user info:', error);
     }
   };
-  // Fetch user info and tweets on component mount
+
   useEffect(() => {
-    const token = localStorage.getItem('userToken');
-    if (!token) {
+    const tokenFromStorage = localStorage.getItem('userToken');
+    
+    if (!tokenFromStorage) {
       router.push('/');
       return;
     }
-
-    // Fetch all tweets
-    fetchTweets();
-    // Fetch trends
-    fetchTrends();
-    // Fetch User Info
+  
+    // Dispatch le token depuis localStorage si nécessaire
+    if (!token) {
+      dispatch({ type: 'SET_TOKEN', payload: tokenFromStorage });
+    }
+  
+    // Utilisez le token de localStorage pour le premier chargement
+    const loadInitialData = async () => {
+      try {
+        const response = await fetch(`${BACKEND_URL}/tweet/all/${tokenFromStorage}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        const data = await response.json();
+        console.log('Tweets data:', data); // Debug log
+        if (data.result) {
+          setTweets(data.tweets);
+        }
+      } catch (error) {
+        console.error('Error loading initial tweets:', error);
+      }
+    };
+  
+    loadInitialData();
     fetchUserInfo();
+    fetchTrends();
   }, []);
-
-  // Fetch tweets from backend
+  
+  // Modifiez fetchTweets pour utiliser aussi le token de localStorage comme fallback
   const fetchTweets = async () => {
     try {
-      const response = await fetch('https://hackatweet-backend-six-swart.vercel.app/users/tweets', {
+      const currentToken = token || localStorage.getItem('userToken');
+      if (!currentToken) return;
+  
+      const response = await fetch(`${BACKEND_URL}/tweet/all/${currentToken}`, {
+        method: 'GET',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('userToken')}`
+          'Content-Type': 'application/json'
         }
       });
+      
+      // Debug logs
+      console.log('Fetch response status:', response.status);
       const data = await response.json();
+      console.log('Fetch response data:', data);
+      
       if (data.result) {
         setTweets(data.tweets);
       }
@@ -62,12 +103,13 @@ export default function Home() {
     }
   };
 
-  // Fetch trending hashtags
   const fetchTrends = async () => {
     try {
-      const response = await fetch('https://hackatweet-backend-six-swart.vercel.app/users/trends', {
+      const token = localStorage.getItem('userToken');
+      const response = await fetch(`${BACKEND_URL}/users/trends`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('userToken')}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
       const data = await response.json();
@@ -79,24 +121,24 @@ export default function Home() {
     }
   };
 
-  // Post new tweet
   const handleTweet = async () => {
     if (!tweetContent.trim()) return;
-
+  
     try {
-      const response = await fetch('http://localhost:3000/tweets', {
+      const response = await fetch(`${BACKEND_URL}/tweet`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('userToken')}`
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ content: tweetContent })
+        body: JSON.stringify({ 
+          token, // token dans le body pour la création
+          content: tweetContent 
+        })
       });
-
+  
       const data = await response.json();
       if (data.result) {
         setTweetContent('');
-        // Refresh tweets and trends after posting
         fetchTweets();
         fetchTrends();
       }
@@ -105,46 +147,39 @@ export default function Home() {
     }
   };
 
-  // Like/Unlike tweet
   const handleLike = async (tweetId) => {
     try {
-      const response = await fetch(`http://localhost:3000/tweets/${tweetId}/like`, {
+      const token = localStorage.getItem('userToken');
+      const response = await fetch(`${BACKEND_URL}/tweet/${tweetId}/like`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('userToken')}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
 
       const data = await response.json();
       if (data.result) {
-        // Update tweets state with new like count
-        setTweets(tweets.map(tweet => {
-          if (tweet._id === tweetId) {
-            return { ...tweet, likes: data.likes };
-          }
-          return tweet;
-        }));
+        fetchTweets(); // Refresh all tweets to get updated likes
       }
     } catch (error) {
       console.error('Error liking tweet:', error);
     }
   };
 
-  // Delete tweet
   const handleDelete = async (tweetId) => {
     try {
-      const response = await fetch(`http://localhost:3000/tweets/${tweetId}`, {
+      const response = await fetch(`${BACKEND_URL}/tweet/${tweetId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('userToken')}`
-        }
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ token }) // token dans le body pour la suppression
       });
-
+  
       const data = await response.json();
       if (data.result) {
-        // Remove tweet from state
-        setTweets(tweets.filter(tweet => tweet._id !== tweetId));
-        // Refresh trends after deletion
+        fetchTweets();
         fetchTrends();
       }
     } catch (error) {
@@ -152,7 +187,6 @@ export default function Home() {
     }
   };
 
-  // Handle logout
   const handleLogout = () => {
     localStorage.removeItem('userToken');
     router.push('/');
@@ -160,21 +194,19 @@ export default function Home() {
 
   return (
     <div className={styles.container}>
-      {/* Left Sidebar */}
       <div className={styles.sidebar}>
         <div className={styles.logo}>
           <Image src="/images/Logo_of_Twitter.svg" alt="Logo" width={50} height={50} />
         </div>
         <div className={styles.userInfo}>
           <h3>{user?.username}</h3>
-          <p>@{user?.username.toLowerCase()}</p>
+          <p>@{user?.username?.toLowerCase()}</p>
           <button onClick={handleLogout} className={styles.logoutButton}>
             Logout
           </button>
         </div>
       </div>
 
-      {/* Main Content */}
       <div className={styles.mainContent}>
         <h1>Home</h1>
         <div className={styles.tweetInput}>
@@ -192,15 +224,22 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Tweet List */}
         <div className={styles.tweetList}>
           {tweets.map((tweet) => (
             <div key={tweet._id} className={styles.tweet}>
               <div className={styles.tweetHeader}>
-                <Image src="/avatar.png" alt="Avatar" width={40} height={40} className={styles.avatar} />
+                <Image 
+                  src="/images/avatar.png" 
+                  alt="Avatar" 
+                  width={40} 
+                  height={40} 
+                  className={styles.avatar}
+                />
                 <span className={styles.username}>{tweet.author.username}</span>
                 <span className={styles.handle}>@{tweet.author.username.toLowerCase()}</span>
-                <span className={styles.timestamp}>{new Date(tweet.createdAt).toLocaleTimeString()}</span>
+                <span className={styles.timestamp}>
+                  {new Date(tweet.createdAt).toLocaleTimeString()}
+                </span>
               </div>
               <p className={styles.tweetContent}>{tweet.content}</p>
               <div className={styles.tweetFooter}>
@@ -208,7 +247,7 @@ export default function Home() {
                   className={styles.likeButton}
                   onClick={() => handleLike(tweet._id)}
                 >
-                  ❤️ {tweet.likes.length}
+                  ❤️ {tweet.likes?.length || 0}
                 </button>
                 {tweet.author._id === user?._id && (
                   <button 
@@ -224,13 +263,14 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Right Sidebar - Trends */}
       <div className={styles.trendsSection}>
         <h2>Trends</h2>
         {trends.map((trend) => (
           <div key={trend.hashtag} className={styles.trend}>
             <p className={styles.hashtag}>{trend.hashtag}</p>
-            <p className={styles.tweetCount}>{trend.count} Tweet{trend.count !== 1 ? 's' : ''}</p>
+            <p className={styles.tweetCount}>
+              {trend.count} Tweet{trend.count !== 1 ? 's' : ''}
+            </p>
           </div>
         ))}
       </div>

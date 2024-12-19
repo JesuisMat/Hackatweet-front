@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useDispatch } from 'react-redux'; // Ajout du hook useDispatch
 import styles from "../styles/SignUp.module.css";
 import { useRouter } from 'next/router';
 import Image from 'next/image';
@@ -8,6 +9,7 @@ export default function SignUp() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
+  const dispatch = useDispatch(); // Initialisation du dispatch
 
   const handleSignUp = async (e) => {
     e.preventDefault();
@@ -24,6 +26,10 @@ export default function SignUp() {
       const data = await response.json();
 
       if (data.result) {
+        // Dispatch les actions pour mettre à jour le store
+        dispatch({ type: 'SET_TOKEN', payload: data.token });
+        dispatch({ type: 'SET_USER', payload: { username } });
+        
         localStorage.setItem('userToken', data.token);
         router.push('/home');
       } else {
