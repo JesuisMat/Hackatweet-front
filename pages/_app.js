@@ -1,10 +1,10 @@
 import '../styles/globals.css';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
-import users from '../reducers/user';  // Assurez-vous que le chemin est correct
+import userReducer from '../reducers/user';
 
 const store = configureStore({
-  reducer: { users },
+  reducer: { user: userReducer }, 
 });
 
 function MyApp({ Component, pageProps }) {

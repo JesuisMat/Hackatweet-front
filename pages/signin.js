@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useDispatch } from 'react-redux'; // Ajout du hook useDispatch
+import { useDispatch } from 'react-redux';
+import { setToken, setUser } from '../reducers/user'; 
 import styles from "../styles/SignIn.module.css";
 import { useRouter } from 'next/router';
 import Image from 'next/image';
@@ -9,7 +10,7 @@ export default function SignIn() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
-  const dispatch = useDispatch(); // Initialisation du dispatch
+  const dispatch = useDispatch();
 
   const handleSignIn = async (e) => {
     e.preventDefault();
@@ -24,18 +25,25 @@ export default function SignIn() {
       });
 
       const data = await response.json();
+      console.log('Sign in response:', data);
 
       if (data.result) {
-        localStorage.setItem('userToken', data.token);
+        // Le token est dans data.user.token, pas dans data.token
+        if (!data.user?.token) {
+          console.error('No token in response');
+          setError('Authentication error: No token received');
+          return;
+        }
 
-        // Dispatch les actions de manière séquentielle
-        await Promise.all([
-          dispatch({ type: 'SET_TOKEN', payload: data.token }),
-          dispatch({ type: 'SET_USER', payload: { username, token: data.token } })
-        ]);
+        // Utiliser data.user.token
+        localStorage.setItem('userToken', data.user.token);
+        console.log('Token saved:', localStorage.getItem('userToken'));
 
-        // Utilisez await pour s'assurer que la navigation se fait après les dispatches
-        await router.push('/home');
+        // Dispatch avec le bon token
+        dispatch(setToken(data.user.token));
+        dispatch(setUser({ username: data.user.username }));
+
+        router.push('/home');
       } else {
         setError(data.error || 'Invalid credentials');
       }
@@ -45,6 +53,7 @@ export default function SignIn() {
     }
   };
 
+  // Le reste du composant reste inchangé
   return (
     <div className={styles.container}>
       <div className={styles.leftSection}>

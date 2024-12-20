@@ -26,11 +26,11 @@ export default function SignUp() {
       const data = await response.json();
 
       if (data.result) {
-        // Dispatch les actions pour mettre à jour le store
-        dispatch({ type: 'SET_TOKEN', payload: data.token });
-        dispatch({ type: 'SET_USER', payload: { username } });
-        
         localStorage.setItem('userToken', data.token);
+        
+        dispatch(setToken(data.token));
+        dispatch(setUser({ username }));
+        
         router.push('/home');
       } else {
         setError(data.error || 'Registration failed');
