@@ -28,18 +28,17 @@ export default function SignIn() {
       console.log('Sign in response:', data);
 
       if (data.result) {
-        // Le token est dans data.user.token, pas dans data.token
+       
         if (!data.user?.token) {
           console.error('No token in response');
           setError('Authentication error: No token received');
           return;
         }
 
-        // Utiliser data.user.token
+       
         localStorage.setItem('userToken', data.user.token);
         console.log('Token saved:', localStorage.getItem('userToken'));
 
-        // Dispatch avec le bon token
         dispatch(setToken(data.user.token));
         dispatch(setUser({ username: data.user.username }));
 
@@ -53,7 +52,6 @@ export default function SignIn() {
     }
   };
 
-  // Le reste du composant reste inchangé
   return (
     <div className={styles.container}>
       <div className={styles.leftSection}>

@@ -181,3 +181,60 @@
   color: #8899a6;
   font-size: 14px;
 }
+
+.likeButton, .deleteButton {
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+
+.likeButton:disabled, .deleteButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.likeButton:hover:not(:disabled) {
+  transform: scale(1.1);
+}
+
+.deleteButton:hover:not(:disabled) {
+  transform: scale(1.1);
+  color: red;
+}
+
+.hashtag {
+  color: #1DA1F2;
+  cursor: pointer;
+}
+
+.hashtag:hover {
+  text-decoration: underline;
+}
+
+.trend {
+  cursor: pointer;
+  padding: 10px;
+  border-radius: 5px;
+  transition: background-color 0.2s;
+}
+
+.trend:hover {
+  background-color: rgba(29, 161, 242, 0.1);
+}
+
+.activeTrend {
+  background-color: rgba(29, 161, 242, 0.2);
+}
+
+.clearFilter {
+  margin-top: 10px;
+  padding: 5px 10px;
+  background-color: #1DA1F2;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+.clearFilter:hover {
+  background-color: #1a91da;
+}

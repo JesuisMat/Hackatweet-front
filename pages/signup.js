@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useDispatch } from 'react-redux'; // Ajout du hook useDispatch
+import { useDispatch } from 'react-redux';
 import styles from "../styles/SignUp.module.css";
 import { useRouter } from 'next/router';
 import Image from 'next/image';
@@ -9,7 +9,7 @@ export default function SignUp() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
-  const dispatch = useDispatch(); // Initialisation du dispatch
+  const dispatch = useDispatch(); 
 
   const handleSignUp = async (e) => {
     e.preventDefault();
