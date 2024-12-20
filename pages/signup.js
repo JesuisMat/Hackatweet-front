@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import styles from "../styles/SignUp.module.css";
 import { useRouter } from 'next/router';
+import { setToken, setUser } from '../reducers/user';
 import Image from 'next/image';
 
 export default function SignUp() {
